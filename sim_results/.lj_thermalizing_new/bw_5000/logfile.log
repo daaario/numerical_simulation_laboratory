@@ -1,0 +1,19 @@
+Lennard-Jones 3D simulation, system created.
+NPART: 108
+TEMPERATURE: 2
+NSTEPS: 50
+NBLOCKS: 5000
+TEMP_STDEV_PREC: 1.5
+ALGORITHM: VERLET
+NDIM: 3
+RHO: 0.05
+VOLUME: 2160
+BOX_DIM: 12.9266
+R_CUT:5
+N_BINS_GOFR: 32
+N_BINS_POFV: 32
+DELTA: 0.1
+DT: -0.001
+Lennard-Jones simulation settings reading complete.
+TEMP_EQUIL: -nan
+NSTEPS_EQUIL: 50
