@@ -1,0 +1,7 @@
+ALGORITHM GIBBS
+J 1.0
+H 0.02
+
+------------------------------
+
+  - POSSIBLE ALGORITHMS: METROPOLIS, GIBBS
