@@ -98,4 +98,5 @@ public:
   double half_mean_length() const;
   void check(const TSP &);
   void next_generation(const TSP &, Random &);
+  void receive_migrant(const std::vector<std::size_t> &, const TSP &);
 };

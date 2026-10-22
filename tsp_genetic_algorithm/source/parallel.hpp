@@ -16,4 +16,6 @@ public:
 
 std::vector<City> generate_and_bcast_cities(std::size_t, std::size_t, Random &,
                                             const MpiEnv &);
-void checksum(const std::vector<City>&, MpiEnv&);
+void checksum(const std::vector<City> &, const MpiEnv &);
+int rank_of_best(double local_best, const MpiEnv &);
+void migrate(Population &pop, const TSP &, Random &, const MpiEnv &);

@@ -45,8 +45,6 @@ int main() {
     for (std::size_t x = 0; x < pos.size() - 1; x++) {
       square_best << pos[x] << ",";
     }
-    square_best << pos[pos.size() - 1] << std::endl;
+    square_best << pos.back() << "\n";
   }
-
-  return 0;
-};
+}

@@ -18,6 +18,6 @@ format:
 	clang-format -i $(SOURCE_DIR)/*.cpp $(SOURCE_DIR)/*.hpp
 
 clear:
-	rm -rf source/*.o
+	rm -rf source/*.o run run_parallel test output/*
 
 .PHONY: format clear

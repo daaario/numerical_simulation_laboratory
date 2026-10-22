@@ -387,3 +387,12 @@ void Population::next_generation(const TSP &tsp, Random &rnd) {
   sort(new_routes);
   _routes = std::move(new_routes);
 }
+
+void Population::receive_migrant(const std::vector<std::size_t> &order,
+                                 const TSP &tsp) {
+  if (!validate_order(tsp.n(), order)) {
+    throw std::runtime_error("Received invalid migrant.");
+  }
+  _routes.back() = Route(order, tsp);
+  sort(_routes);
+}

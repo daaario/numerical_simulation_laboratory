@@ -1,5 +1,5 @@
-#include <iostream>
 #include "parallel.hpp"
+#include <iostream>
 
 MpiEnv::MpiEnv(int &argc, char **&argv) {
   MPI_Init(&argc, &argv);
@@ -48,9 +48,9 @@ std::vector<City> generate_and_bcast_cities(std::size_t ndim,
   return cities;
 }
 
-void checksum(const std::vector<City>& cities, MpiEnv& mpi) {
+void checksum(const std::vector<City> &cities, const MpiEnv &mpi) {
   double checksum = 0.0;
-  for (auto& c : cities) {
+  for (auto &c : cities) {
     for (auto x : c.get_pos()) {
       checksum += x;
     }
@@ -60,5 +60,49 @@ void checksum(const std::vector<City>& cities, MpiEnv& mpi) {
   MPI_Reduce(&checksum, &cmin, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
   MPI_Reduce(&checksum, &cmax, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   if (mpi.rank() == 0)
-    std::cout << "cities checksum min/max: " << cmin << " " << cmax << std::endl;
+    std::cout << "cities checksum min/max: " << cmin << " " << cmax
+              << std::endl;
+}
+
+int rank_of_best(double local_best, const MpiEnv &mpi) {
+  struct {
+    double val;
+    int rank;
+  } in{local_best, mpi.rank()}, out; /* in-place definition of struct,    *
+                                      * and declaration of two instances, *
+                                      * only one of which is defined      */
+  MPI_Allreduce(&in, &out, 1, MPI_DOUBLE_INT, MPI_MINLOC, MPI_COMM_WORLD);
+  return out.rank;
+}
+
+void migrate(Population &pop, const TSP &tsp, Random &rnd, const MpiEnv &mpi) {
+  const int rank = mpi.rank(), size = mpi.size();
+  if (size == 1) {
+    return;
+  }
+
+  std::vector<int> pop_order(size);
+  if (rank == 0) {
+    std::vector<std::size_t> pop_order_sizet = rnd_order(size, rnd);
+    pop_order = std::vector<int>(
+        pop_order_sizet.begin(),
+        pop_order_sizet.end()); /* range constructor: converts each element (ok
+                                   for sending via MPI) */
+  }
+
+  MPI_Bcast(pop_order.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+
+  const int pos_in_pop_order =
+      std::find(pop_order.begin(), pop_order.end(), rank) - pop_order.begin();
+  const int destination_rank = pop_order[(pos_in_pop_order + 1) % size];
+  const int source_rank = pop_order[(pos_in_pop_order - 1 + size) % size];
+
+  const std::vector<std::size_t> &best_order = pop.best().order();
+  std::vector<int> buffer(best_order.begin(), best_order.end());
+
+  MPI_Sendrecv_replace(buffer.data(), buffer.size(), MPI_INT, destination_rank,
+                       0, source_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  pop.receive_migrant(std::vector<std::size_t>(buffer.begin(), buffer.end()),
+                      tsp);
 }
