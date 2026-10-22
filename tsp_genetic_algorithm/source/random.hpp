@@ -11,6 +11,7 @@ private:
 
 public:
   Random(std::string);
+  Random(int);
   Random();
   ~Random();
   void read_seed(std::string);

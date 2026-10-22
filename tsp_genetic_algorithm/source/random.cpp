@@ -25,12 +25,27 @@ Random::Random(std::string seed_input_filepath) {
   set_seed(_seed, primes);
 }
 
+Random::Random(int s) {
+  _seed = std::array<int, 4>{0, 0, 0, s};
+
+  std::ifstream primes_stream("input/primes.dat");
+  if (!primes_stream) {
+    throw std::runtime_error(
+        "Unable to open or find \'input/primes.dat\' file.");
+  }
+
+  std::pair<int, int> primes;
+  primes_stream >> primes.first >> primes.second;
+
+  set_seed(_seed, primes);
+}
+
 Random::Random() : Random("input/seed_in.dat") {}
 
 Random::~Random() {
   try {
     log_last_seed();
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << "Warning: could not log last seed: " << e.what() << std::endl;
   }
 }
@@ -106,4 +121,3 @@ double Random::rannyu() {
 double Random::rannyu(double min, double max) {
   return min + (max - min) * rannyu();
 }
-

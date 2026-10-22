@@ -260,7 +260,7 @@ bool validate_order(std::size_t N, const std::vector<std::size_t> &order) {
 
   std::vector<bool> checks(N, false);
   for (std::size_t i = 0; i < N; i++) {
-    if (order[i] >= N || order[i] < 0) {
+    if (order[i] >= N) {
       return false;
     }
     checks[order[i]] = true;

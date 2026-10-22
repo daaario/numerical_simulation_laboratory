@@ -1,29 +1,23 @@
-CXX =  clang++
+CXX = mpicxx
 CXXFLAGS = -g -std=c++23 -Wall -Wextra
 SOURCE_DIR = source
-EXECUTABLE = run
 
 program: $(SOURCE_DIR)/main.o $(SOURCE_DIR)/tsp.o $(SOURCE_DIR)/random.o
-	$(CXX) $(CXXFLAGS) $(SOURCE_DIR)/main.o $(SOURCE_DIR)/tsp.o $(SOURCE_DIR)/random.o -o $(EXECUTABLE)
+	$(CXX) $(CXXFLAGS) $^ -o run
+
+parallel: $(SOURCE_DIR)/main_parallel.o $(SOURCE_DIR)/tsp.o $(SOURCE_DIR)/random.o $(SOURCE_DIR)/parallel.o
+	$(CXX) $(CXXFLAGS) $^ -o run_parallel
 
 test: $(SOURCE_DIR)/test.o $(SOURCE_DIR)/tsp.o $(SOURCE_DIR)/random.o
-	$(CXX) $(CXXFLAGS) $(SOURCE_DIR)/test.o $(SOURCE_DIR)/tsp.o $(SOURCE_DIR)/random.o -o test
+	$(CXX) $(CXXFLAGS) $^ -o test
 
-main.o: $(SOURCE_DIR)/main.cpp $(SOURCE_DIR)/tsp.hpp $(SOURCE_DIR)/random.hpp
-	clang-format -i $(SOURCE_DIR)/main.cpp $(SOURCE_DIR)/tsp.hpp $(SOURCE_DIR)/random.hpp
-	$(CXX) $(CXXFLAGS) -c $(SOURCE_DIR)/main.cpp -o $(SOURCE_DIR)/main.o
-	
-test.o: $(SOURCE_DIR)/test.cpp $(SOURCE_DIR)/tsp.hpp $(SOURCE_DIR)/random.hpp
-	clang-format -i $(SOURCE_DIR)/test.cpp $(SOURCE_DIR)/tsp.hpp $(SOURCE_DIR)/random.hpp
-	$(CXX) $(CXXFLAGS) -c $(SOURCE_DIR)/test.cpp -o $(SOURCE_DIR)/test.o
+$(SOURCE_DIR)/%.o: $(SOURCE_DIR)/%.cpp $(wildcard $(SOURCE_DIR)/*.hpp)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-tsp.o: $(SOURCE_DIR)/tsp.cpp $(SOURCE_DIR)/tsp.hpp $(SOURCE_DIR)/random.hpp
-	clang-format -i $(SOURCE_DIR)/tsp.cpp $(SOURCE_DIR)/tsp.hpp $(SOURCE_DIR)/random.hpp
-	$(CXX) $(CXXFLAGS) -c $(SOURCE_DIR)/tsp.cpp -o $(SOURCE_DIR)/tsp.o
-
-random.o: $(SOURCE_DIR)/random.cpp $(SOURCE_DIR)/random.hpp
-	clang-format -i $(SOURCE_DIR)/random.cpp $(SOURCE_DIR)/random.hpp
-	$(CXX) $(CXXFLAGS) -c $(SOURCE_DIR)/random.cpp -o $(SOURCE_DIR)/random.o
+format:
+	clang-format -i $(SOURCE_DIR)/*.cpp $(SOURCE_DIR)/*.hpp
 
 clear:
-	rm -r source/*.o
+	rm -rf source/*.o
+
+.PHONY: format clear

@@ -38,14 +38,13 @@ public:
   explicit TSP(const std::vector<City> &);
   explicit TSP(const std::string &);
   std::size_t n() const;
-  const City& city(std::size_t) const;
+  const City &city(std::size_t) const;
   double d(std::size_t, std::size_t) const;
 };
 
-std::vector<City> cities_in_a_square(std::size_t, Random&);
-std::vector<City> cities_on_a_circle(std::size_t, Random&);
-double circle_optimum(const TSP&);
-
+std::vector<City> cities_in_a_square(std::size_t, Random &);
+std::vector<City> cities_on_a_circle(std::size_t, Random &);
+double circle_optimum(const TSP &);
 
 /********************************************/
 /**************** route class ***************/
@@ -87,17 +86,16 @@ double recompute_length(const Route &, const TSP &);
 class Population {
 private:
   std::vector<Route> _routes{};
-  std::pair<Route, Route> _crossover(std::size_t, std::size_t,
-                                          const TSP &, Random &) const;
-  std::pair<Route, Route> _select_and_generate(const TSP &,
-                                               Random &) const;
+  std::pair<Route, Route> _crossover(std::size_t, std::size_t, const TSP &,
+                                     Random &) const;
+  std::pair<Route, Route> _select_and_generate(const TSP &, Random &) const;
   double _select_weight_pow = 2.0, _p_crossover = 0.6;
 
 public:
   Population(std::size_t, const TSP &, Random &rnd);
-  const Route& best() const;
+  const Route &best() const;
   double best_length() const;
   double half_mean_length() const;
-  void check(const TSP&);
+  void check(const TSP &);
   void next_generation(const TSP &, Random &);
 };
