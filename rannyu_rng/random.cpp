@@ -1,6 +1,7 @@
 #include "random.hpp"
 
 #include <cmath>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 
@@ -195,6 +196,71 @@ void Random::wiener(double dt, int N_steps) {
     x += dx;
     std::cout << x << " ";
   }
-
   std::cout << std::endl;
 }
+
+void Random::hydrogen(std::array<int, 3> quant_num, int N, double delta) {
+  std::array<double, 3> pos{0, 0, 1}, pos_old = pos;
+  double prob = hydrogen_prob_dist(quant_num, pos_old), prob_old = prob;
+
+  int nacc = 0, natt = 0;
+  for (int i = 0; i < N; i ++) {
+    do {
+      pos = pos_old;
+      double theta = std::asin(2. * rannyu() - 1.);
+      double phi = 2 * pi * rannyu();
+
+      pos = {pos[0] + delta * std::cos(theta) * std::cos(phi), pos[1] + delta * std::cos(theta) * std::sin(phi), pos[2] + delta * std::sin(theta)};
+      prob = hydrogen_prob_dist(quant_num, pos);
+      natt++;
+    } while (rannyu() >= std::min(1.0, prob / prob_old));
+
+    std::cout << pos[0] << "," << pos[1] << "," << pos[2] << "\n";
+    nacc++;
+    pos_old = pos;
+    prob_old = prob;
+  }
+  //  std::cerr << "Acceptance ratio: " << double(nacc) / natt << std::endl;
+}
+
+void Random::hydrogen_nu(std::array<int, 3> quant_num, int N, double delta) {
+  std::array<double, 3> pos{0, 0, 1}, pos_old = pos;
+  double prob = hydrogen_prob_dist(quant_num, pos_old), prob_old = prob;
+
+  int nacc = 0, natt = 0;
+  for (int i = 0; i < N; i ++) {
+    do {
+      pos = pos_old;
+
+      pos = {pos[0] + gauss(0.0, delta),
+             pos[1] + gauss(0.0, delta), 
+             pos[2] + gauss(0.0, delta)};
+      prob = hydrogen_prob_dist(quant_num, pos);
+      natt++;
+    } while (rannyu() >= std::min(1.0, prob / prob_old));
+
+    std::cout << pos[0] << "," << pos[1] << "," << pos[2] << "\n";
+    nacc++;
+    pos_old = pos;
+    prob_old = prob;
+  }
+  std::cerr << "Acceptance ratio: " << double(nacc) / natt << std::endl;
+}
+
+double hydrogen_prob_dist(std::array<int, 3> quant_num, std::array<double, 3> pos) {
+  double r = 0.0;
+  for (auto x : pos) {
+    r += x * x;
+  }
+  r = std::sqrt(r);
+
+  if (quant_num == std::array<int, 3>{1, 0, 0}) {
+    return std::exp(-2 * r);
+  } else if (quant_num == std::array<int, 3>{2, 1, 0}) {
+    double z = pos[2];
+    return z * z * std::exp(-r);
+  } else {
+    throw std::runtime_error("State (n,l,m)=(" + std::to_string(quant_num[0]) + "," + std::to_string(quant_num[1]) + "," + std::to_string(quant_num[2]) + ") not supported.");
+  }
+}
+

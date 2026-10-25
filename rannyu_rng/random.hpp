@@ -26,4 +26,8 @@ public:
   void rw_lattice(double, int);
   void rw_continuum(double, int);
   void wiener(double, int);
+  void hydrogen(std::array<int, 3>, int, double);
+  void hydrogen_nu(std::array<int, 3>, int, double);
 };
+
+double hydrogen_prob_dist(std::array<int, 3>, std::array<double, 3>);
