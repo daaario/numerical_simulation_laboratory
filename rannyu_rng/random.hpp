@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 #include <string>
 #include <utility>
 
@@ -28,6 +29,8 @@ public:
   void wiener(double, int);
   void hydrogen(std::array<int, 3>, int, double);
   void hydrogen_nu(std::array<int, 3>, int, double);
+  std::vector<double> ex8_energy_block_avgs(double, double, int, int);
+  void ex8_parameters_trajectory(double, double, double, int, int);
+  std::vector<double> ex8_sample_wavefunction(double, double, int);
 };
 
-double hydrogen_prob_dist(std::array<int, 3>, std::array<double, 3>);

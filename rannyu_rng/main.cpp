@@ -17,10 +17,17 @@ int main(int argc, char* argv[]) {
   Random rng;
   int N = std::stoi(args[1]);
 
+  /****************************************************/
+  /********** SAMPLE UNIFORM VALUES IN [0,1) **********/
+  /****************************************************/
   if (args.size() == 2) {
     for (int i = 0; i < N; i++) {
       std::cout << rng.rannyu() << std::endl;
     }
+
+  /*************************************************/
+  /********** SAMPLE GAUSSIAN N(mu,sigma) **********/
+  /*************************************************/
   } else if (args[2] == "gauss") {
     if (args.size() != 5) {
       throw std::runtime_error("Error: invalid number of arguments in sampling a Gaussian distribution.");
@@ -30,6 +37,10 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < N; i++) {
       std::cout << rng.gauss(mean, sigma) << std::endl;
     }
+  
+  /*************************************************/
+  /********** SAMPLE DECAYING EXPONENTIAL **********/
+  /*************************************************/
   } else if (args[2] == "exp") {
     if (args.size() != 4)
     {
@@ -41,6 +52,10 @@ int main(int argc, char* argv[]) {
     {
       std::cout << rng.exponential(lambda) << std::endl;
     }
+  
+  /********************************************************/
+  /********** SAMPLE CAUCHY-LORENTZ DISTRIBUTION **********/
+  /********************************************************/
   } else if (args[2] == "lorentz") {
     if (args.size() != 5)
     {
@@ -52,6 +67,10 @@ int main(int argc, char* argv[]) {
     {
       std::cout << rng.cauchy_lorentz(mean, gamma) << std::endl;
     }
+
+  /***********************************************************/
+  /********** SAMPLE DECREASING LINEAR DISTRIBUTION **********/
+  /***********************************************************/
   } else if (args[2] == "linear") {
     if (args.size() != 3)
     {
@@ -61,6 +80,10 @@ int main(int argc, char* argv[]) {
     {
       std::cout << rng.linear_decreasing() << std::endl;
     }
+
+  /*********************************************************************/
+  /********** PERFORMS N TIMES THE BUFFON COUNTING EXPERIMENT **********/
+  /*********************************************************************/
   } else if (args[2] == "buffon") {
     if (args.size() != 6)
     {
@@ -72,6 +95,11 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < N; i++) {
       rng.buffon(L, d, N_throws_per_block);
     }
+
+  /**************************************************/
+  /********** PERFORMS RW ON CUBE LATTICE, **********/
+  /********* OUTPUTS DISTANCES FROM ORIGIN **********/
+  /**************************************************/
   } else if (args[2] == "rw_lattice") {
     if (args.size() != 5)
     {
@@ -83,6 +111,11 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < N; i++) {
       rng.rw_lattice(a, N_steps);
     }
+
+  /**************************************************/
+  /**************** PERFORMS 3D RW, *****************/
+  /********* OUTPUTS DISTANCES FROM ORIGIN **********/
+  /**************************************************/
   } else if (args[2] == "rw_continuum") {
     if (args.size() != 5)
     {
@@ -94,6 +127,10 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < N; i++) {
       rng.rw_continuum(a, N_steps);
     }
+
+  /*****************************************************************/
+  /********** SAMPLES A WIENER PROCESS AT FIXED INTERVALS **********/
+  /*****************************************************************/
   } else if (args[2] == "wiener") {
     if (args.size() != 5)
     {
@@ -105,6 +142,10 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < N; i++) {
       rng.wiener(dt, N_steps);
     }
+
+  /***********************************************/
+  /********** SAMPLES HYDROGEN ORBITALS **********/
+  /***********************************************/
   } else if (args[2] == "hydrogen") {
     if (args.size() != 7)
     {
@@ -113,6 +154,11 @@ int main(int argc, char* argv[]) {
     std::array<int, 3> quant_num{std::stoi(args[3]), std::stoi(args[4]), std::stoi(args[5])};
     double delta = std::stof(args[6]);
     rng.hydrogen(quant_num, N, delta);
+
+  /***********************************************/
+  /********** SAMPLES HYDROGEN ORBITALS **********/
+  /*********** USING NON-UNIFORM T(x|y) **********/
+  /***********************************************/
   } else if (args[2] == "hydrogen_nu") {
     if (args.size() != 7)
     {
@@ -121,6 +167,51 @@ int main(int argc, char* argv[]) {
     std::array<int, 3> quant_num{std::stoi(args[3]), std::stoi(args[4]), std::stoi(args[5])};
     double delta = std::stof(args[6]);
     rng.hydrogen_nu(quant_num, N, delta);
+
+  /***********************************************/
+  /********** ENERGY BLOCK AVGS FOR EX8 **********/
+  /***********************************************/
+  } else if (args[2] == "ex8_energy_block_avgs") {
+    if (args.size() != 6)
+    {
+      throw std::runtime_error("Error: invalid number of arguments in computing energy block averages for exercise 8.");
+    }
+    int Nblk = N, Nsmp = std::stoi(args[5]);
+    double mu = std::stof(args[3]), sigma = std::stof(args[4]);
+    std::vector<double> output = rng.ex8_energy_block_avgs(mu, sigma, Nblk, Nsmp);
+    for (auto x : output) {
+      std::cout << x << "\n";
+    }
+
+  /**************************************************/
+  /********** PARAMETERS TRAJECTORY DURING **********/
+  /*********** SIMULATED ANNEALING FOR EX8 **********/
+  /**************************************************/
+  } else if (args[2] == "ex8_parameters_trajectory") {
+    if (args.size() != 7)
+    {
+      throw std::runtime_error("Error: invalid number of arguments in computing parameters adjustments for exercise 8.");
+    }
+    int Nblk = N, Nsmp = std::stoi(args[6]);
+    double mu = std::stof(args[3]), sigma = std::stof(args[4]), T = std::stof(args[5]);
+    rng.ex8_parameters_trajectory(mu, sigma, T, Nblk, Nsmp); /* prints on file */
+
+  /**************************************************/
+  /********** PARAMETERS TRAJECTORY DURING **********/
+  /*********** SIMULATED ANNEALING FOR EX8 **********/
+  /**************************************************/
+  } else if (args[2] == "ex8_sample_wavefunction") {
+    if (args.size() != 5)
+    {
+      throw std::runtime_error("Error: invalid number of arguments in sampling wavefunction for exercise 8.");
+    }
+    double mu = std::stof(args[3]), sigma = std::stof(args[4]);
+    std::vector<double> data = rng.ex8_sample_wavefunction(mu, sigma, N);
+
+    for (auto x : data) {
+      std::cout << x << "\n";
+    }
+
   } else {
     throw std::runtime_error("Error: user-provided probability distribution is unknown.");
   }
