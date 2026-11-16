@@ -153,7 +153,12 @@ int main(int argc, char* argv[]) {
     }
     std::array<int, 3> quant_num{std::stoi(args[3]), std::stoi(args[4]), std::stoi(args[5])};
     double delta = std::stof(args[6]);
-    rng.hydrogen(quant_num, N, delta);
+    std::vector<std::array<double, 3>> results = rng.hydrogen(quant_num, N, delta);
+
+    for (auto pos : results) {
+      std::cout << pos[0] << "," << pos[1] << "," << pos[2] << "\n"; 
+    }
+    std::cout << std::endl;
 
   /***********************************************/
   /********** SAMPLES HYDROGEN ORBITALS **********/
@@ -166,7 +171,12 @@ int main(int argc, char* argv[]) {
     }
     std::array<int, 3> quant_num{std::stoi(args[3]), std::stoi(args[4]), std::stoi(args[5])};
     double delta = std::stof(args[6]);
-    rng.hydrogen_nu(quant_num, N, delta);
+    std::vector<std::array<double, 3>> results = rng.hydrogen_nu(quant_num, N, delta);
+
+    for (auto pos : results) {
+      std::cout << pos[0] << "," << pos[1] << "," << pos[2] << "\n"; 
+    }
+    std::cout << std::endl;
 
   /***********************************************/
   /********** ENERGY BLOCK AVGS FOR EX8 **********/

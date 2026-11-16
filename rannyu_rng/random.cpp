@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 namespace {
 constexpr std::array<int, 4> m = {2107, 4071, 1521, 502};
@@ -200,7 +200,8 @@ void Random::wiener(double dt, int N_steps) {
   std::cout << std::endl;
 }
 
-void Random::hydrogen(std::array<int, 3> quant_num, int N, double delta) {
+std::vector<std::array<double, 3>>
+Random::hydrogen(std::array<int, 3> quant_num, int N, double delta) {
   auto hydrogen_prob_dist = [quant_num](std::array<double, 3> pos) {
     double r = 0.0;
     for (auto x : pos) {
@@ -232,24 +233,35 @@ void Random::hydrogen(std::array<int, 3> quant_num, int N, double delta) {
     return pos;
   };
 
+  std::vector<std::array<double, 3>> results = {};
+
   std::array<double, 3> pos{0, 0, 1}, pos_old = pos;
   double prob = hydrogen_prob_dist(pos), prob_old = prob;
-  int nacc = 0, natt = 0;
-  for (int i = 0; i < N; i++) {
-    do {
-      pos = pos_new(pos_old);
-      natt++;
-    } while (rannyu() >= std::min(1.0, prob / prob_old));
+  //  int nacc = 0, natt = 0;
 
-    std::cout << pos[0] << "," << pos[1] << "," << pos[2] << "\n";
-    nacc++;
-    pos_old = pos;
-    prob_old = prob;
+  for (int i = 0; i < N; i++) {
+    pos = pos_new(pos_old);
+    prob = hydrogen_prob_dist(pos);
+    //  natt++;
+
+    double prob_acceptance = std::min(1.0, prob / prob_old);
+    if (rannyu() < prob_acceptance) {
+      // new state accepted
+      results.emplace_back(pos);
+      pos_old = pos;
+      prob_old = prob;
+      //  nacc++;
+    } else {
+      // new state rejected
+      results.emplace_back(pos_old);
+    }
   }
-  std::cerr << "Acceptance ratio: " << double(nacc) / natt << std::endl;
+  //  std::cerr << "Acceptance ratio: " << double(nacc) / natt << std::endl;
+  return results;
 }
 
-void Random::hydrogen_nu(std::array<int, 3> quant_num, int N, double delta) {
+std::vector<std::array<double, 3>>
+Random::hydrogen_nu(std::array<int, 3> quant_num, int N, double delta) {
   auto hydrogen_prob_dist = [quant_num](std::array<double, 3> pos) {
     double r = 0.0;
     for (auto x : pos) {
@@ -277,23 +289,31 @@ void Random::hydrogen_nu(std::array<int, 3> quant_num, int N, double delta) {
     return pos;
   };
 
+  std::vector<std::array<double, 3>> results = {};
+
   std::array<double, 3> pos{0, 0, 1}, pos_old = pos;
-  double prob = hydrogen_prob_dist(pos_old), prob_old = prob;
-
+  double prob = hydrogen_prob_dist(pos), prob_old = prob;
   //  int nacc = 0, natt = 0;
-  for (int i = 0; i < N; i++) {
-    do {
-      pos = pos_new(pos_old);
-      prob = hydrogen_prob_dist(pos);
-      //  natt++;
-    } while (rannyu() >= std::min(1.0, prob / prob_old));
 
-    std::cout << pos[0] << "," << pos[1] << "," << pos[2] << "\n";
-    //  nacc++;
-    pos_old = pos;
-    prob_old = prob;
+  for (int i = 0; i < N; i++) {
+    pos = pos_new(pos_old);
+    prob = hydrogen_prob_dist(pos);
+    //  natt++;
+
+    double prob_acceptance = std::min(1.0, prob / prob_old);
+    if (rannyu() < prob_acceptance) {
+      // new state accepted
+      results.emplace_back(pos);
+      pos_old = pos;
+      prob_old = prob;
+      //  nacc++;
+    } else {
+      // new state rejected
+      results.emplace_back(pos_old);
+    }
   }
   //  std::cerr << "Acceptance ratio: " << double(nacc) / natt << std::endl;
+  return results;
 }
 
 std::vector<double> Random::ex8_energy_block_avgs(double mu, double sigma,
@@ -313,30 +333,29 @@ std::vector<double> Random::ex8_energy_block_avgs(double mu, double sigma,
     return (exp_plus + exp_minus) * (exp_plus + exp_minus);
   };
 
-  /* sample the distributuion and compute block averages at the same time*/
+  /* new state proposal */
   double delta_x = 2.5 * std::sqrt(sigma * sigma / 2 + mu * mu);
-  auto x_new = [this, delta_x](double x_old) {
-    return x_old + rannyu(-delta_x, delta_x);
+  auto propose_sample = [this, delta_x](double x) {
+    return x + rannyu(-delta_x, delta_x);
   };
 
-  double x = mu, x_old = x;
-  double p = prob(x), p_old = p;
+  double x = mu;
+  double p = prob(x);
   //  int nacc = 0, natt = 0;
+
   std::vector<double> blk_avgs{};
   for (int block = 0; block < Nblk; block++) {
     double sum = 0.0;
     for (int smp = 0; smp < Nsmp; smp++) {
-      /* generate new sample */
-      do {
-        x = x_new(x_old);
-        p = prob(x);
-        //  natt++;
-      } while (rannyu() >= std::min(1.0, p / p_old));
-      //  nacc++;
-      x_old = x;
-      p_old = p;
-
-      /* add its contribution to the block average */
+      double x_new = propose_sample(x);
+      double p_new = prob(x_new);
+      //  natt++;
+      if (rannyu() < std::min(1.0, p_new / p)) {
+        //  new sample accepted, replace the previous
+        x = x_new;
+        p = p_new;
+        //  nacc++;
+      }
       sum += integrand(x);
     }
     blk_avgs.emplace_back(sum / Nsmp);
@@ -346,7 +365,8 @@ std::vector<double> Random::ex8_energy_block_avgs(double mu, double sigma,
   return blk_avgs;
 }
 
-void Random::ex8_parameters_trajectory(double mu, double sigma, double T, int Nblk, int Nsmp) {
+void Random::ex8_parameters_trajectory(double mu, double sigma, double T,
+                                       int Nblk, int Nsmp) {
   std::ofstream log_stream("output/simulated_annealing_history.csv");
   log_stream << "TEMP,MU,SIGMA,E_EXP,E_ERR\n";
 
@@ -354,8 +374,8 @@ void Random::ex8_parameters_trajectory(double mu, double sigma, double T, int Nb
   double delta = 0.1;
   auto new_parameters = [this, &delta](double &mu, double &sigma) {
     double theta = rannyu(0.0, 2 * pi), r = delta * std::sqrt(rannyu());
-    mu = std::abs(mu + r * std::cos(theta));
-    sigma = std::abs(sigma + r * std::sin(theta));
+    return std::pair<double, double>(std::abs(mu + r * std::cos(theta)),
+           std::abs(sigma + r * std::sin(theta)));
   };
 
   /* compute new energy */
@@ -369,7 +389,8 @@ void Random::ex8_parameters_trajectory(double mu, double sigma, double T, int Nb
     }
     avg /= Nblk;
     avg2 /= Nblk;
-    double err = std::sqrt(std::max(0.0, avg2 - avg * avg) / std::max(1, Nblk - 1));
+    double err =
+        std::sqrt(std::max(0.0, avg2 - avg * avg) / std::max(1, Nblk - 1));
     return std::pair<double, double>(avg, err);
   };
 
@@ -383,71 +404,64 @@ void Random::ex8_parameters_trajectory(double mu, double sigma, double T, int Nb
   int steps_per_temperature = 100;
   double alpha = 0.95; /*  TODO: decide */
   double T_min = 1e-2;
-  auto cool_down = [alpha, &delta](double &T) { 
-    T *= alpha; 
+  auto cool_down = [alpha, &delta](double &T) {
+    T *= alpha;
     delta *= std::sqrt(alpha);
   };
 
   /* SA LOOP */
   /* setup */
   auto [E, E_err] = energy_with_error(mu, sigma);
-  log_stream << T << "," << mu << "," << sigma << "," << E << "," << E_err << std::endl;
+  log_stream << T << "," << mu << "," << sigma << "," << E << "," << E_err
+             << std::endl;
 
-  double E_old = E, E_err_old = E_err;
-  double mu_old = mu, sigma_old = sigma;
-  
   int current_step = 0;
   int acc_moves = 0, att_moves = 0;
-  std::cerr << std::endl << "T = " << std::setprecision(1) << std::setw(5) << T 
-            << "    mu = " << std::setprecision(2) << std::setw(5) << mu 
-            << "    sigma = " << std::setprecision(2) << std::setw(5) << sigma 
+  std::cerr << std::endl
+            << "T = " << std::setprecision(1) << std::setw(5) << T
+            << "    mu = " << std::setprecision(2) << std::setw(5) << mu
+            << "    sigma = " << std::setprecision(2) << std::setw(5) << sigma
             << "    E = " << std::setprecision(2) << std::setw(5) << E
             << std::endl;
   do {
-    do {
-      /* reset previous attempt */
-      mu = mu_old, sigma = sigma_old;
-      E = E_old, E_err = E_err_old;
+    auto [mu_new, sigma_new] = new_parameters(mu, sigma);
+    auto [E_new, E_err_new] = energy_with_error(mu, sigma);
+    att_moves++;
 
-      /* attemp new parameters */
-      new_parameters(mu, sigma);
-      auto [E_new, E_err_new] = energy_with_error(mu, sigma);
+    if (accept_adjustment(E_new, E)) {
+      //  new parameters accepted
+      mu = mu_new, sigma = sigma_new;
       E = E_new, E_err = E_err_new;
-
-      /* update counter and print statusbar */
-      att_moves++;
-      std::cerr << "\racc: " << std::setw(5) << acc_moves << "\tatt: " << std::setw(5) << att_moves
-                << "\tratio: " << double(acc_moves) / att_moves;
-    } while (!accept_adjustment(E, E_old));
-    /* confirm accepted move, log accepted parameters and their energy expectation */
-    mu_old = mu, sigma_old = sigma;
-    E_old = E, E_err_old = E_err;
-
-    /* update counter and print statusbar */
-    acc_moves++;
-    std::cerr << "\racc: " << std::setw(5) << acc_moves << "\tatt: " << std::setw(5) << att_moves
+      acc_moves++;
+    }
+    std::cerr << "\racc: " << std::setw(5) << acc_moves
+              << "\tatt: " << std::setw(5) << att_moves
               << "\tratio: " << double(acc_moves) / att_moves;
 
     /* if appropriate, lower temperature and zero counters */
     current_step++;
     if (current_step % steps_per_temperature == 0) {
-      log_stream << T << "," << mu << "," << sigma << "," << E << "," << E_err << std::endl;
+      log_stream << T << "," << mu << "," << sigma << "," << E << "," << E_err
+                 << std::endl;
 
       cool_down(T);
-      std::cerr << std::endl << "T = " << std::setprecision(2) << std::setw(5) << T 
-                << "    mu = " << std::setprecision(2) << std::setw(5) << mu 
-                << "    sigma = " << std::setprecision(2) << std::setw(5) << sigma 
-                << "    E = " << std::setprecision(2) << std::setw(5) << E
-                << std::endl;
+      std::cerr << std::endl
+                << "T = " << std::setprecision(2) << std::setw(5) << T
+                << "    mu = " << std::setprecision(2) << std::setw(5) << mu
+                << "    sigma = " << std::setprecision(2) << std::setw(5)
+                << sigma << "    E = " << std::setprecision(2) << std::setw(5)
+                << E << std::endl;
       acc_moves = 0;
       att_moves = 0;
     }
   } while (T >= T_min);
 }
 
-std::vector<double> Random::ex8_sample_wavefunction(double mu, double sigma, int N) {
-  double w_side = 1.0;                              // weight of each of the two Gaussians at +-mu
-  double w_mid  = 2.0 * std::exp(-mu * mu / (sigma * sigma)); // weight of the Gaussian at 0
+std::vector<double> Random::ex8_sample_wavefunction(double mu, double sigma,
+                                                    int N) {
+  double w_side = 1.0; // weight of each of the two Gaussians at +-mu
+  double w_mid =
+      2.0 * std::exp(-mu * mu / (sigma * sigma)); // weight of the Gaussian at 0
   double W = 2.0 * w_side + w_mid;
 
   auto sample = [this, w_side, W, mu, sigma]() {
@@ -455,8 +469,7 @@ std::vector<double> Random::ex8_sample_wavefunction(double mu, double sigma, int
     double center;
     if (u < w_side) {
       center = +mu;
-    }
-    else if (u < 2.0 * w_side) {
+    } else if (u < 2.0 * w_side) {
       center = -mu;
     } else {
       center = 0.0;

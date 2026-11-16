@@ -27,8 +27,8 @@ public:
   void rw_lattice(double, int);
   void rw_continuum(double, int);
   void wiener(double, int);
-  void hydrogen(std::array<int, 3>, int, double);
-  void hydrogen_nu(std::array<int, 3>, int, double);
+  std::vector<std::array<double, 3>> hydrogen(std::array<int, 3>, int, double);
+  std::vector<std::array<double, 3>> hydrogen_nu(std::array<int, 3>, int, double);
   std::vector<double> ex8_energy_block_avgs(double, double, int, int);
   void ex8_parameters_trajectory(double, double, double, int, int);
   std::vector<double> ex8_sample_wavefunction(double, double, int);
